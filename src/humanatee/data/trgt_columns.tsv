@@ -1,0 +1,47 @@
+priority_rank	Rank according to priority flags	default
+flags	Flags indicating this locus might be high priority	default
+filters	Filters indicating columns that should be examined for potential quality issues	default
+chrom	Chromosome	default
+start	Start position of locus	default
+end	End position of locus	default
+variant_id	TRGT ID	default
+struc	Structure of the repeat	default
+motifs	Motifs in tandem repeat	default
+PS	Phase set	default
+SD	Number of reads spanning each allele	default
+MC	Count of motifs of each TR on each allele	default
+mother_MC	Summed motif counts for maternal alleles	denovo
+father_MC	Summed motif counts for paternal alleles	denovo
+pathogenic_motifs	Motifs known to be associated with pathogenicity	pathogenic-tsv
+pathogenic_MC	Summed counts of all pathogenic motifs on each allele	pathogenic-tsv
+pathogenic	Genotypes containing pathogenic or premutation alleles, determined by comparing pathogenic motif counts to the normal range(s) and pathogenic threshold(s)	pathogenic-tsv
+normal_min	Normal minimum for pathogenic motif counts	pathogenic-tsv
+normal_max	Normal maximum for pathogenic motif counts	pathogenic-tsv
+pathogenic_expansion_min	Pathogenic threshold for expansions	pathogenic-tsv
+pathogenic_contraction_max	Pathogenic threshold for contractions	pathogenic-tsv
+pathogenic_threshold	Pathogenic threshold(s) of pathogenic motif counts	pathogenic-tsv
+AL	Allele length in bps	default
+ALLR	Allele length range in bps	default
+mother_AL	Mother allele lengths	denovo
+father_AL	Father allele lengths	denovo
+expanded	Genotypes containing expanded alleles, determined by comparing summed motif counts (all motifs) to the population cutoff, the shortest allele in each genotype is compared to the recessive cutoff	population-db
+pop_upper	Population upper cutoff	population-db
+pop_cutoff_n	Number of population alleles used to calculate population cutoffs	population-db
+pop_recessive_upper	Population upper cutoff calculated from only shortest allele in each genotype of population	population-db
+pop_recessive_cutoff_n	Number of population alleles used to calculate population cutoffs	population-db
+coverage_dropout	Full dropout (<2x coverage) or haplotype dropout (<2x coverage per haplotype	dropouts
+mother_dropout	Coverage cut-off dropout detection using HP tags from phasing tools in mother; possible values: Full dropout (FD), Haplotype dropout (HD), Not (N)	denovo
+father_dropout	Coverage cut-off dropout detection using HP tags from phasing tools in father; possible values: Full dropout (FD), Haplotype dropout (HD), Not (N)	denovo
+denovo_status	Indicates if the allele is potentially de novo; possible values: {X, Y:{+, -, =}}. This is X if no de novo read is found and Y otherwise, if parental origin can be determined without ambiguity the allele sequences can be compared directly such that the de novo type can be established as + (expansion), - (contraction), or = (substitution)	denovo
+allele_ratio	Ratio of de novo coverage to allele coverage	denovo
+child_ratio	Ratio of de novo coverage to total coverage at this site	denovo
+allele_coverage	Number of child reads mapped to this specific allele	denovo
+gene	Gene symbols for consequences listed in consequence, empty if there is no ALT allele	INFO/CSQ
+highest_consequence	Highest consequence from consequence column	INFO/CSQ
+highest_impact	Highest impact from consequence column, order: HIGH, MODERATE, LOW, MODIFIER	INFO/CSQ
+consequence	Consequence annotation from VEP in format SYMBOL|Gene|Feature|Feature_type|Consequence|BIOTYPE|IMPACT, empty if there is no ALT allele	INFO/CSQ
+disease_gene	Gene name from annotation TSV	pathogenic-tsv
+disease_id	Disease ID from annotation TSV	pathogenic-tsv
+disease_name	Disease name from annotation TSV	pathogenic-tsv
+inheritance	Mode of inheritance for disease	pathogenic-tsv
+notes	Notes from annotation TSV	pathogenic-tsv

@@ -1,0 +1,43 @@
+[project]
+name = "humanatee"
+description = "Annotation tools for HiFi Human WGS."
+authors = [
+    {name = "Juniper Lake", email = "jlake@pacificbiosciences.com"},
+]
+version = "0.1.0"
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+dependencies = [
+    "pysam",
+    "pandas",
+    "numpy",
+    "openpyxl",
+    "seaborn",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit>=2.18.0",
+    "pytest",
+    "pytest-cov",
+]
+
+[project.scripts]
+humanatee = "humanatee.__main__:main"
+
+[build-system]
+requires = ["setuptools >= 69.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 120
+extend-select = ['Q', 'RUF100', 'C90', 'UP', 'I', 'D', 'T']
+extend-ignore = ['D105', 'D107', 'D205', 'D415', 'D203', 'D213']
+flake8-quotes = {inline-quotes = 'single', multiline-quotes = 'double'}
+mccabe = { max-complexity = 10 }
+isort = { known-first-party = ['pydantic', 'tests'] }
+target-version = "py38"
+
+[tool.ruff.format]
+quote-style = 'single'
