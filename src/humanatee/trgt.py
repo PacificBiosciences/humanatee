@@ -9,6 +9,7 @@ import re
 import sqlite3
 import sys
 from collections import Counter
+from importlib import resources
 from pathlib import Path
 
 import numpy as np
@@ -22,15 +23,14 @@ from humanatee import dbutils, trgtplots, utils, vcf2db
 class TRGTdb:
     """Annotate TRGT VCF based on user-provided files."""
 
-    DIR = os.path.dirname(__file__)
-
     def __init__(self, sample_id, vcf, prefix, gene_lookups=[], phenotype=None):
         """Annotate VCF based on optional inputs."""
         self.sample_id = sample_id
-        self.gene_lookup_labels = [os.path.basename(file).split('.')[0] for file in gene_lookups]
+        self.gene_lookup_labels = [os.path.basename(file.name).split('.')[0] for file in gene_lookups]
         if phenotype:
             self.gene_lookup_labels.insert(0, 'phenotype')
         self.prefix = prefix
+        self.resources = resources.files('humanatee')
 
         logging.debug('Initializing output database, removing if it already exists')
         db_path = f'{prefix}.db'
@@ -44,9 +44,8 @@ class TRGTdb:
         dbutils.smart_execute(self.cursor, 'PRAGMA synchronous=OFF;')
 
         logging.debug('Loading database schema for VCF')
-        with open(os.path.join(self.DIR, 'schemas/vcf.sql')) as schema_file:
-            schema = schema_file.read()
-        self.cursor.executescript(schema)
+        vcf_schema = self.resources.joinpath('schemas', 'vcf.sql').read_text()
+        self.cursor.executescript(vcf_schema)
 
         if gene_lookups or phenotype:
             vcf2db.add_gene_lookups(self.cursor, gene_lookups, phenotype)
@@ -285,8 +284,6 @@ class TRGTdb:
     def annotate_denovos(self, denovo, mother, father):
         """Annotate de novo variants based on denovo file."""
         logging.info('Annotating de novo variants')
-        self.mother = mother
-        self.father = father
         records = csv.DictReader(denovo, delimiter='\t')
         header = records.fieldnames
 
@@ -302,7 +299,7 @@ class TRGTdb:
                 records.fieldnames = header
         else:
             if not mother and not father:
-                raise ValueError('TRGT denovo was run in trio mode but either mother or father was not provided')
+                raise ValueError('TRGT denovo was run in duo mode but either mother or father was not provided')
 
         # replace child_dropout with dropout
         index = header.index('child_dropout')
@@ -407,15 +404,13 @@ class TRGTdb:
         )
         columns = [_[1] for _ in dbutils.smart_execute(self.cursor, 'PRAGMA table_info(TRGT_temp);').fetchall()]
         column_order = []
-        filename = os.path.join(self.DIR, 'data/trgt_columns.tsv')
-        with open(filename) as file:
-            for line in file:
-                column_order.append(line.rstrip().split('\t')[0])
+        trgt_columns = self.resources.joinpath('data', 'trgt_columns.tsv').read_text()
+        for line in trgt_columns.split('\n'):
+            column_order.append(line.rstrip().split('\t')[0])
         if len(self.gene_lookup_labels) > 0:
             idx = column_order.index('gene') + 1
             column_order[idx:idx] = self.gene_lookup_labels
-        # ignored_columns = [col for col in columns if col not in column_order]
-        # print(ignored_columns)
+
         columns = sorted([col for col in columns if col in column_order], key=column_order.index)
 
         # create main TRGT views
@@ -457,7 +452,7 @@ class TRGTdb:
                 """,
             )
 
-    def prioritize_and_plot(self, mother, father, plot=True, priority_rank_max=2, allele_metric='AL'):
+    def prioritize_and_plot(self, plot=True, priority_rank_max=2, allele_metric='AL'):
         """Add flags to variants based on pathogenicity, population cutoffs, denovo status, impact, etc."""
         logging.info(f"Prioritizing{' and plotting' if plot else ''} variants")
 
@@ -465,20 +460,13 @@ class TRGTdb:
         plot_prefix = f"{directory}/{self.prefix.split('/')[-1]}"
         Path(directory).mkdir(parents=True, exist_ok=True)
 
-        child_color = 'tab:orange'
-        plot_settings = []
-        if mother:
-            plot_settings.append((f'mother_{allele_metric}', 'Mom', 'tab:pink'))
-            child_color = 'tab:olive'
-        if father:
-            plot_settings.append((f'father_{allele_metric}', 'Dad', 'tab:blue'))
-            child_color = 'tab:olive'
-        plot_settings.insert(0, (allele_metric, 'Child', child_color))
-
         if 'phenotype' in self.gene_lookup_labels:
             sorted_phenotypes = dbutils.smart_execute(self.cursor, 'SELECT phenotype FROM Gene').fetchall()
             sorted_phenotypes = sorted([_[0] for _ in sorted_phenotypes if _[0] is not None and _[0] > 0], reverse=True)
             cutoff50 = np.percentile(sorted_phenotypes, 50)
+        else:
+            sorted_phenotypes = []
+            cutoff50 = None
 
         dbutils.smart_execute(
             self.cursor,
@@ -492,7 +480,14 @@ class TRGTdb:
                 """,
         )
         col_names = [_[0] for _ in self.cursor.description]
+        # get plot settings based on if parents genotypes are provided
+        plot_settings = [(allele_metric, 'Child', 'tab:olive')]
+        if (mother := f'mother_{allele_metric}') in col_names:
+            plot_settings.append((mother, 'Mom', 'tab:pink'))
+        if (father := f'father_{allele_metric}') in col_names:
+            plot_settings.append((father, 'Dad', 'tab:blue'))
         results = self.cursor.fetchall()
+
         for row in results:
             row_dict = {col: row[col_names.index(col)] for col in col_names}
             variant_id = row_dict['variant_id']
@@ -525,7 +520,7 @@ class TRGTdb:
                     sample_colors=[sample[2] for sample in plot_settings],
                 )
 
-    def create_filtered_database(self):
+    def create_filtered_database(self, pathogenic=False):
         """Create a filtered database from the main database."""
         logging.info('Creating filtered database')
         # TODO: requires views TRGT_filtered and TRGT_pathogenic
@@ -548,8 +543,9 @@ class TRGTdb:
         for table in ['Gene', 'Variant', 'Consequence', 'SampleAllele']:
             logging.info(f'Populating filtered table: {table}')
             column_names = [_[1] for _ in dbutils.smart_execute(self.cursor, f'PRAGMA table_info({table});').fetchall()]
+            pathogenic_ids = 'OR variant_id IN (SELECT variant_id FROM TRGT_pathogenic)' if pathogenic else ''
             where = (
-                'WHERE variant_id IN (SELECT variant_id FROM TRGT_filtered) OR variant_id IN (SELECT variant_id FROM TRGT_pathogenic)'
+                f'WHERE variant_id IN (SELECT variant_id FROM TRGT_filtered) {pathogenic_ids}'
                 if table != 'Gene'
                 else ''
             )
@@ -772,14 +768,15 @@ def parse_args(cmdargs):
     parser.add_argument('--dropouts', type=argparse.FileType('r'), metavar='TSV', help='Coverage dropouts')
     parser.add_argument(
         '--gene-lookup',
-        type=str,
+        type=argparse.FileType('r'),
+        default=[],
         metavar=('TSV'),
         action='append',
         help='A tab delimited, headerless file with gene lookup information',
     )
     parser.add_argument(
         '--phenotype',
-        type=str,
+        type=argparse.FileType('r'),
         metavar=('TSV'),
         help='A tab delimited, headerless file with 1:1 gene to phenotype information',
     )
@@ -796,8 +793,10 @@ def parse_args(cmdargs):
     parser._action_groups.reverse()
     args = parser.parse_args(cmdargs)
 
-    if args.denovo and (args.mother is None and args.father is None):
+    if args.denovo and not any([args.mother, args.father]):
         parser.error('--denovo requires --mother and/or --father.')
+    if args.plot and not args.population_db:
+        parser.error('--plot requires --population-db.')
     return args
 
 
@@ -815,18 +814,18 @@ def trgt_main(cmdargs):
         prefix=args.prefix,
     )
 
+    if args.denovo:
+        trgt_db.annotate_denovos(args.denovo, args.mother, args.father)
     if args.dropouts:
         trgt_db.annotate_coverage_dropouts(args.dropouts)
     if args.pathogenic_tsv:
         trgt_db.identify_pathogenic_expansions(args.pathogenic_tsv)
     if args.population_db:
         trgt_db.identify_population_expansions(args.population_db)
-    if args.denovo:
-        trgt_db.annotate_denovos(args.denovo, args.mother, args.father)
     trgt_db.create_summary_views()
-    trgt_db.prioritize_and_plot(args.mother, args.father, args.plot)
+    trgt_db.prioritize_and_plot(args.plot)
     if args.filter or args.xlsx:
-        trgt_db.create_filtered_database()
+        trgt_db.create_filtered_database(args.pathogenic_tsv is not None)
     if args.tsv:
         trgt_db.write_tabular(args.filter)
     if args.xlsx:

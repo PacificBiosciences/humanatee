@@ -3,10 +3,10 @@
 import argparse
 import json
 import logging
-import os
 import sqlite3
 import sys
 from collections import Counter
+from importlib import resources
 
 import numpy as np
 import pysam
@@ -105,9 +105,8 @@ def vcf_to_db(vcf, cohort, prefix):
     cursor = conn.cursor()
 
     # read schema from file
-    with open(os.path.join(os.path.dirname(__file__), 'schemas/trgtpop.sql')) as schema_file:
-        schema = schema_file.read()
-    cursor.executescript(schema)
+    vcf_schema = resources.files('humanatee').joinpath('schemas', 'trgtpop.sql').read_text()
+    cursor.executescript(vcf_schema)
 
     # add samples to Sample table
     for sample in samples:
@@ -169,10 +168,10 @@ def merge_dbs(db_list, prefix):
             try:
                 cursor.execute('INSERT INTO Sample (sampleid, cohort) VALUES (?, ?)', (row))
             except sqlite3.IntegrityError:
-                cursor.execute('SELECT * FROM Sample WHERE sampleid = ?', (row[1],))
-                original_cohort = cursor.fetchone()[2]
+                cursor.execute('SELECT * FROM Sample WHERE sampleid = ?', (row[0],))
+                original_cohort = cursor.fetchone()[1]
                 logging.warning(
-                    f"Sample '{row[1]}' already exists in database associated with cohort '{original_cohort}' and will not be added."
+                    f"Sample '{row[0]}' already exists in database associated with cohort '{original_cohort}' and will not be added."
                 )
                 pass
 
@@ -192,12 +191,11 @@ def merge_dbs(db_list, prefix):
         db2_conn.close()
 
     # initialize output database, removing if it already exists
-    humanatee.silentremove(f'{prefix}.db')
+    humanatee.silent_remove(f'{prefix}.db')
     conn = sqlite3.connect(f'{prefix}.db')
     cursor = conn.cursor()
-    with open(os.path.join(os.path.dirname(__file__), 'schemas/trgtpop.sql')) as schema_file:
-        schema = schema_file.read()
-    cursor.executescript(schema)
+    vcf_schema = resources.files('humanatee').joinpath('schemas', 'trgtpop.sql').read_text()
+    cursor.executescript(vcf_schema)
 
     # merge databases one by one
     for db in db_list:
@@ -212,13 +210,8 @@ def trgtpop_main(cmdargs):
     """Run from command line."""
     parser = argparse.ArgumentParser(description=__doc__, prog='humanatee trgtpop')
     requiredNamed = parser.add_argument_group('required arguments')
-    requiredNamed.add_argument(
-        '--prefix',
-        metavar='PREFIX',
-        type=str,
-        required=True,
-        help='File prefix for output DB',
-    )
+    requiredNamed.add_argument('--prefix', metavar='PREFIX', required=True, type=str, help='Prefix for output')
+
     mainInput = parser.add_mutually_exclusive_group(required=True)
     mainInput.add_argument('--vcf', metavar='VCF', type=str, help='Multi-sample TRGT VCF of population')
     mainInput.add_argument('--dbs', metavar='DB,DB,...', type=str, nargs='+', help='Databases to merge')

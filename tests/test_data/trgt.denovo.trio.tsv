@@ -1,0 +1,4 @@
+chrom	start	end	motifs	trid	genotype	denovo_coverage	allele_coverage	allele_ratio	child_coverage	child_ratio	mean_diff_father	mean_diff_mother	father_dropout_prob	mother_dropout_prob	allele_origin	denovo_status	per_allele_reads_father	per_allele_reads_mother	per_allele_reads_child	father_dropout	mother_dropout	child_dropout	index	father_MC	mother_MC	child_MC	father_AL	mother_AL	child_AL	father_overlap_coverage	mother_overlap_coverage
+chr1	181116	181464	CGCCGGCGCAGGCGCAGAGAGGCGCGCCGCGCCGGCGCAGGCGCAGAGAGGCGCGCCG	chr1_181116_181464_CGCCGGCGCAGGCGCAGAGAGGCGCGCCGCGCCGGCGCAGGCGCAGAGAGGCGCGCCG	2	1	1	1.0	2	0.5	105.0	105.0	0.0	0.125	M:2	Y:-	3,2	2,1	1,1	N	N	N	1	7,9	7,11	9,10	406,522	406,616	522,583	0,0	0,0
+chr13	70139353	70139428	CTA,CTG	SCA8_ATXN8OS	0	0	0	0.0	0	0.0	0.0	0.0	0.0	0.0	.	.	.	.	.	.	.	.	0	.	.	.	.	.	.	.	.
+chr18	55586155	55586227	CAG	FECD3_TCF4	0	0	0	0.0	0	0.0	0.0	0.0	0.0	0.0	.	.	.	.	.	.	.	.	0	.	.	.	.	.	.	.	.

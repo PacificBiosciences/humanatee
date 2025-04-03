@@ -30,14 +30,14 @@ class PopHist:
         self,
         title,
         pop_al,
+        filename,
         short_allele_cutoff,
         long_allele_cutoff,
-        filename,
         bin_width=None,
         figsize=None,
         sample_genotypes=[],
-        sample_colors=['tab:orange'],
-        sample_labels=['Sample'],
+        sample_colors=[],
+        sample_labels=[],
         pop_color='tab:gray',
         rugplot_color='dimgray',
         cutoff_linestyle=(0, (5, 5)),
@@ -57,6 +57,10 @@ class PopHist:
         self.pop_color = pop_color
         self.long_allele_cutoff = long_allele_cutoff
         self.short_allele_cutoff = short_allele_cutoff
+
+        if not pop_al:
+            logging.warning(f'Cannot plot allele length histogram for {title} because population distribution is None.')
+            return
 
         logging.debug(f'Plotting allele length histogram for {title}')
         if len(sample_colors) != len(sample_genotypes) != len(sample_labels):
@@ -143,20 +147,22 @@ class PopHist:
             verticalalignment='top',
             horizontalalignment='left',
         )
-        ax.axhline(
-            y=self.short_allele_cutoff + half_bin,
-            color=self.rugplot_color,
-            linewidth=self.cutoff_line['width'],
-            linestyle=self.cutoff_line['style'],
-            alpha=self.cutoff_line['alpha'],
-        )
-        ax.axvline(
-            x=self.short_allele_cutoff + half_bin,
-            color=self.rugplot_color,
-            linewidth=self.cutoff_line['width'],
-            linestyle=self.cutoff_line['style'],
-            alpha=self.cutoff_line['alpha'],
-        )
+        if self.short_allele_cutoff:
+            ax.axhline(
+                y=self.short_allele_cutoff + half_bin,
+                color=self.rugplot_color,
+                linewidth=self.cutoff_line['width'],
+                linestyle=self.cutoff_line['style'],
+                alpha=self.cutoff_line['alpha'],
+            )
+        if self.long_allele_cutoff:
+            ax.axvline(
+                x=self.long_allele_cutoff + half_bin,
+                color=self.rugplot_color,
+                linewidth=self.cutoff_line['width'],
+                linestyle=self.cutoff_line['style'],
+                alpha=self.cutoff_line['alpha'],
+            )
         sns.rugplot(
             x=[allele + half_bin for allele in long_alleles],
             y=[allele + half_bin for allele in short_alleles],
@@ -201,14 +207,15 @@ class PopHist:
             patch = mpatches.Patch(color=sample.color, label=sample.label)
             handles.append(patch)
             # if (sample_idx + 1) == len(sample_genotypes):
-        plt.legend(handles=handles, loc='upper center', ncol=len(self.samples), framealpha=0)
-        ax.axvline(
-            x=self.long_allele_cutoff + self.axis_params.bin_width / 2,
-            color=self.rugplot_color,
-            linewidth=self.cutoff_line['width'],
-            linestyle=self.cutoff_line['style'],
-            alpha=self.cutoff_line['alpha'],
-        )
+        plt.legend(handles=handles, loc='upper center', ncol=max([1, len(self.samples)]), framealpha=0)
+        if self.long_allele_cutoff:
+            ax.axvline(
+                x=self.long_allele_cutoff + self.axis_params.bin_width / 2,
+                color=self.rugplot_color,
+                linewidth=self.cutoff_line['width'],
+                linestyle=self.cutoff_line['style'],
+                alpha=self.cutoff_line['alpha'],
+            )
         ax.set_xlabel(self.axis_labels['top_x'])
         ax.set_ylabel('Alleles')
         ax.margins(x=0)  # remove weird histogram padding on extremes of x axis
@@ -247,7 +254,7 @@ class AxisParams:
     """Set axis limits and ticks based on data."""
 
     def __init__(self, min_allele, max_allele, bin_width_override):
-        data_range = max_allele - min_allele
+        data_range = max([1, max_allele - min_allele])
         self.buffer = data_range / 40
         self.bin_width = int(np.ceil(self.buffer)) if not bin_width_override else bin_width_override
 

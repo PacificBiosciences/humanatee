@@ -4,7 +4,7 @@ description = "Annotation tools for HiFi Human WGS."
 authors = [
     {name = "Juniper Lake", email = "jlake@pacificbiosciences.com"},
 ]
-version = "0.1.0"
+version = "0.1.1"
 requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
@@ -29,6 +29,12 @@ humanatee = "humanatee.__main__:main"
 [build-system]
 requires = ["setuptools >= 69.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+humanatee = ["data/*.tsv", "schemas/*.sql"]
 
 [tool.ruff]
 line-length = 120

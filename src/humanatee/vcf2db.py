@@ -237,7 +237,7 @@ def add_gene_lookups(cursor, gene_lookups, phenotype=None):
     logging.info('Adding gene lookups to db')
     df = pd.DataFrame(columns=['gene'])
     for gene_lookup in gene_lookups:
-        label = os.path.basename(gene_lookup).split('.')[0].replace('-', '_').replace('.', '_')
+        label = os.path.basename(gene_lookup.name).split('.')[0].replace('-', '_').replace('.', '_')
         new_df = pd.read_csv(gene_lookup, sep='\t', names=['gene', label], dtype=str)
         new_df = new_df.astype(str).groupby('gene').agg(lambda x: '|'.join(x)).reset_index()
         df = df.merge(new_df, on='gene', how='outer')
