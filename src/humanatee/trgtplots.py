@@ -11,7 +11,7 @@ import numpy as np
 import seaborn as sns
 from matplotlib.ticker import MaxNLocator
 
-import humanatee
+from humanatee import utils
 
 plt.set_loglevel('warning')
 
@@ -70,7 +70,7 @@ class PopHist:
             self.samples.append(self.Sample(gt, color, label))
 
         self.population = Population(
-            pop_al, humanatee.utils.flatten([sample.genotype for sample in self.samples])
+            pop_al, utils.flatten([sample.genotype for sample in self.samples])
         )  # before axis params
         self.axis_params = AxisParams(self.population.min_allele, self.population.max_allele, bin_width)
 
@@ -276,10 +276,8 @@ class Population:
 
         # pop_al is a string representing a counter dict
         # convert pop_al string to array of arrays where each subarray represents a sample genotype
-        self.genotypes = [
-            genotype for genotype in humanatee.reverse_counter(population_alleles) if set(genotype) != {None}
-        ]
-        self.alleles = [al for al in humanatee.flatten(self.genotypes) if al]  # haploid and diploid included
+        self.genotypes = [genotype for genotype in utils.reverse_counter(population_alleles) if set(genotype) != {None}]
+        self.alleles = [al for al in utils.flatten(self.genotypes) if al]  # haploid and diploid included
         self.min_allele = np.min(self.alleles + sample_alleles)
         self.max_allele = np.max(self.alleles + sample_alleles)
 

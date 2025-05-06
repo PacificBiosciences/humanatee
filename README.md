@@ -20,6 +20,8 @@ As Humanatee is not covered by any service level agreement or the like, please d
 
 ## Changelog
 
+* 0.2.0
+  * Replace VEP requirement for gene annotation with `humanatee refanno` command that can be run a single time for a catalog.
 * 0.1.1
   * Fixed build issue where package data wasn't being copied from source.
   * Fixed bugs that required trgt optional params `--phenotype` and `--gene-lookup` to be specified.

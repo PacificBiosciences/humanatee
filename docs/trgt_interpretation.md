@@ -36,7 +36,6 @@ A description of all possible columns can be found in [trgt_columns.tsv](../src/
 | pathogenic-tsv | `--pathogenic-tsv` |
 | population-db | `--population-db` |
 | dropouts | `--dropouts` |
-| INFO/CSQ | If the input VCF has gene consequence annotations from [VEP](https://useast.ensembl.org/info/docs/tools/vep/script/vep_download.html) |
 
 The most important columns are `priority_rank`, `flags`, and `filters`, which are used to prioritize the variants. The `priority_rank` column is a numeric value that is used to sort variants, with lower values indicating higher priority (`1`=highest priority, `4`=lowest priority).
 
@@ -52,8 +51,8 @@ The following table shows the specific flags and filters that can affect the `pr
 | Filter | `coverage_dropout`|Locus was determined to be a haplotype or full coverage dropout from `--droputs` input | Decreases to `4` despite all other flags/filters except `pathogenic` or `premutation` |
 | Flag | `mode=denovo`, `mode=biallelic`, `mode=hemizygous` | Indicates the mode of inheritance | `-1` |
 | Filter | `allele_ratio`, `child_ratio`, `father_dropout`, `mother_dropout` | Quality metrics if `mode=denovo` flag is present | `+1` |
-| Flag | `impact=HIGH`, `impact=MODERATE`, `misc=population_monomorphic`, `misc=large_expansion` | Highest VEP impact for variant, or miscellaneous flags  | `-1` |
-| Flag | `phenotype=<rank>/<number of genes with nonzero phenotype score>` | Sample phenotype score rank, only flagged if in top 50% of nonzero phenotype scores | `-1` |
+| Flag | `impact=exon`, `misc=population_monomorphic`, `misc=large_expansion` | Repeat overlaps a gene exon, or miscellaneous flags  | `-1` |
+| Flag | `phenotype=<rank>/<number of genes with nonzero phenotype score>` | Sample phenotype score rank, only flagged if in top 10% of nonzero phenotype scores | `-1` |
 
 ## Plots
 

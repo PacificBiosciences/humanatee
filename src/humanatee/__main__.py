@@ -4,15 +4,16 @@ import argparse
 import sys
 from importlib.metadata import version
 
-from humanatee import print_version, trgt_main, trgtpop_main
+from humanatee import refanno, trgt, trgtpop, utils
 
 
 def main(prog='humanatee', level=1):
     """Run from command line."""
     CMDS = {
-        'trgt': ('Annotate TRGT results', trgt_main),
-        'trgtpop': ('Aggregate population VCFs for annotation', trgtpop_main),
-        'version': ('Print the version and exit', print_version),
+        'trgt': ('Annotate TRGT results', trgt.trgt_main),
+        'trgtpop': ('Aggregate population VCFs for annotation', trgtpop.trgtpop_main),
+        'refanno': ('Annotate VCF with gene consequence or bed overlap', refanno.refanno_main),
+        'version': ('Print the version and exit', utils.print_version),
     }
 
     USAGE = '\n'.join(

@@ -4,7 +4,7 @@ description = "Annotation tools for HiFi Human WGS."
 authors = [
     {name = "Juniper Lake", email = "jlake@pacificbiosciences.com"},
 ]
-version = "0.1.1"
+version = "0.2.0"
 requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}

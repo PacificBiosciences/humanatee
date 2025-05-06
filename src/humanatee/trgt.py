@@ -6,7 +6,6 @@ import json
 import logging
 import os
 import re
-import sqlite3
 import sys
 from collections import Counter
 from importlib import resources
@@ -16,14 +15,13 @@ import numpy as np
 import pandas as pd
 import pysam
 
-import humanatee
 from humanatee import dbutils, trgtplots, utils, vcf2db
 
 
 class TRGTdb:
     """Annotate TRGT VCF based on user-provided files."""
 
-    def __init__(self, sample_id, vcf, prefix, gene_lookups=[], phenotype=None):
+    def __init__(self, sample_id, vcf, prefix, gene_lookups=[], phenotype=None, no_db=False):
         """Annotate VCF based on optional inputs."""
         self.sample_id = sample_id
         self.gene_lookup_labels = [os.path.basename(file.name).split('.')[0] for file in gene_lookups]
@@ -31,21 +29,13 @@ class TRGTdb:
             self.gene_lookup_labels.insert(0, 'phenotype')
         self.prefix = prefix
         self.resources = resources.files('humanatee')
+        self.consequence_order = ['CDS', 'five_prime_UTR', 'three_prime_UTR', 'intron', 'upstream', 'downstream']
 
         logging.debug('Initializing output database, removing if it already exists')
-        db_path = f'{prefix}.db'
-        # TODO: add in-memory only option
-        humanatee.silent_remove(db_path)
-        if os.path.dirname(db_path) != '':
-            os.makedirs(os.path.dirname(db_path), exist_ok=True)  # make parent directories if they don't exist
-        self.conn = sqlite3.connect(db_path)
-        self.cursor = self.conn.cursor()
+        self.conn, self.cursor = dbutils.initialize_db(prefix, schemas=['variant', 'consequence', 'vcf'], no_db=no_db)
+        dbutils.add_columns(self.cursor, 'Variant', {key: 'TEXT' for key in ['priority_rank', 'flags', 'filters']})
         dbutils.smart_execute(self.cursor, 'PRAGMA foreign_keys = ON;')
         dbutils.smart_execute(self.cursor, 'PRAGMA synchronous=OFF;')
-
-        logging.debug('Loading database schema for VCF')
-        vcf_schema = self.resources.joinpath('schemas', 'vcf.sql').read_text()
-        self.cursor.executescript(vcf_schema)
 
         if gene_lookups or phenotype:
             vcf2db.add_gene_lookups(self.cursor, gene_lookups, phenotype)
@@ -70,6 +60,7 @@ class TRGTdb:
             self.sample_id,
             'trgt',
             table_columns={'Variant': variant_columns, 'SampleAllele': sample_allele_columns},
+            csq=False,  # TRGT does not use CSQ
         )
 
     def commit_and_close(self):
@@ -115,14 +106,13 @@ class TRGTdb:
             'inheritance': 'TEXT',
             'notes': 'TEXT',
         }
-        for label, type in columns.items():
-            dbutils.add_column(self.cursor, 'Variant', label, type)
+        dbutils.add_columns(self.cursor, 'Variant', columns)
 
         # load pathogenic csv
         records = csv.DictReader(anno_tsv, delimiter='\t')
         for row in records:
             trid, motifs, struc = tuple([_.split('=')[1] for _ in row['info'].split(';')])
-            start = int(row['start']) - 1  # bed to vcf
+            start = int(row['start'])
             items = {
                 k: row[k] for k in row.keys() if row[k] and k in columns
             }  # dictreader returns empty strings for missing values
@@ -181,8 +171,7 @@ class TRGTdb:
 
         # add columns to SampleAllele table for pathogenic info
         columns = {'pathogenic_MC': 'INTEGER', 'pathogenic': 'TEXT'}
-        for label, type in columns.items():
-            dbutils.add_column(self.cursor, 'SampleAllele', label, type)
+        dbutils.add_columns(self.cursor, 'SampleAllele', columns)
 
         # test pathogenicity for loci that are in Pathogenic table
         dbutils.smart_execute(
@@ -209,45 +198,86 @@ class TRGTdb:
         for x in sample_alleles:
             self.__update_variant_pathogenicity__(*x)
 
-    def identify_population_expansions(self, pop_db):
+    def load_annotation_db(self, annotation_db):
+        """Load annotation database."""
+        # TODO: pull through extra columns from annotation database for reference (e.g. segdups)
+        logging.info('Checking contents of annotation database')
+        pop = False
+        csq = False
+
+        dbutils.smart_execute(self.cursor, f'ATTACH DATABASE "{annotation_db}" AS anno')
+
+        base_columns = ['variant_id', 'chrom', 'start', 'end', 'motifs', 'struc', 'source']
+        base_columns_present = dbutils.validate_db_tables(self.cursor, {'anno.Variant': base_columns}, raise_error=True)
+
+        if not base_columns_present:
+            raise ValueError(
+                'Annotation database does not have required table (Variant) and/or columns: variant_id, chrom, start, end, motifs, struc, source'
+            )
+
+        attached_columns = self.cursor.execute('PRAGMA anno.table_info("Variant");').fetchall()
+        attached_columns = {_[1]: _[2] for _ in attached_columns if _[1] not in base_columns}
+
+        consequence_cols = dbutils.smart_execute(self.cursor, 'PRAGMA anno.table_info("Consequence");').fetchall()
+        consequence_cols = [_[1] for _ in consequence_cols]
+        if dbutils.validate_db_tables(self.cursor, {'anno.Consequence': consequence_cols}, raise_error=False):
+            csq = True
+            logging.debug('Loading CSQ annotations from annotation database')
+            # empty_lookups = {label:None for label in self.gene_lookup_labels}
+
+            existing_variants = dbutils.smart_execute(self.cursor, 'SELECT variant_id FROM Variant;').fetchall()
+            existing_variants = [_[0] for _ in existing_variants]
+            # get rows from anno.Consequence where variant_id is in Variant table
+            dbutils.smart_execute(
+                self.cursor,
+                f"""
+                                  INSERT INTO Consequence ({','.join(consequence_cols)})
+                                  SELECT * FROM anno.Consequence
+                                  WHERE variant_id IN (SELECT variant_id FROM Variant)
+                                  AND source = "trgt";
+                                  """,
+            )
+
+        dbutils.add_columns(self.cursor, 'Variant', attached_columns, raise_error=True)
+
+        if all(
+            [
+                col in attached_columns
+                for col in [
+                    'pop_upper',
+                    'pop_n_alleles',
+                    'pop_recessive_upper',
+                    'pop_recessive_n_alleles',
+                    'pop_allele_length_genotypes',
+                ]
+            ]
+        ):
+            pop = True
+
+        if 'csq' in attached_columns:
+            csq = True
+
+        set_statement = [f'{col} = a.{col}' for col in attached_columns.keys()]
+
+        logging.debug('Updating Variant table with annotation database')
+        dbutils.smart_execute(
+            self.cursor,
+            f"""
+            UPDATE Variant
+            SET
+                {', '.join(set_statement)}
+            FROM anno.Variant AS a
+            WHERE {' AND '.join([f"Variant.{col} = a.{col}" for col in base_columns])}
+            """,
+        )
+        return pop, csq
+
+    def identify_population_expansions(self, annotation_db):
         """Annotate expanded alleles based on population cutoffs."""
         logging.info('Annotating expansions based on population cutoffs')
 
-        # add columns to Variant table for population info
-        columns = {
-            'pop_upper': 'INTEGER',
-            'pop_cutoff_n': 'INTEGER',
-            'pop_recessive_upper': 'INTEGER',
-            'pop_recessive_cutoff_n': 'INTEGER',
-            'pop_allele_length_genotypes': 'TEXT',
-        }
-        for label, type in columns.items():
-            dbutils.add_column(self.cursor, 'Variant', label, type)
-
         # add columns to SampleAllele table for population info
-        dbutils.add_column(self.cursor, 'SampleAllele', 'expanded', 'TEXT')
-
-        # attach population database and update Variant table
-        dbutils.smart_execute(self.cursor, f'ATTACH DATABASE "{pop_db}" AS pop')
-        dbutils.smart_execute(
-            self.cursor,
-            """
-                            UPDATE Variant
-                            SET
-                                pop_upper = p.upper,
-                                pop_cutoff_n = p.n_alleles,
-                                pop_recessive_upper = p.recessive_upper,
-                                pop_recessive_cutoff_n = p.recessive_n_alleles,
-                                pop_allele_length_genotypes = p.allele_length_genotypes
-                            FROM pop.Locus AS p
-                            WHERE Variant.variant_id = p.trid
-                            AND Variant.chrom = p.chrom
-                            AND Variant.start = p.start
-                            AND Variant.end = p.end
-                            AND Variant.motifs = p.motifs
-                            AND Variant.struc = p.struc
-                            """,
-        )
+        dbutils.add_columns(self.cursor, 'SampleAllele', {'expanded': 'TEXT'})
 
         # update SampleAllele table with expanded status based on population cutoffs
         dbutils.smart_execute(
@@ -317,16 +347,14 @@ class TRGTdb:
         variant_columns = {
             'father_dropout': 'TEXT',  # TODO: make Rust dropout tool that take multi-sample VCF and has columns for each sample
             'mother_dropout': 'TEXT',
-            'mother_AL': 'TEXT',  # TODO: get parent AL/MC from merged VCF and then ignore these columns
+            'mother_AL': 'TEXT',  # if you have RUST tool above, get parent AL/MC from merged VCF and then ignore these columns
             'father_AL': 'TEXT',
             'mother_MC': 'TEXT',
             'father_MC': 'TEXT',
         }
         variant_columns = {k: v for k, v in variant_columns.items() if k in header}
-        for column, sql_type in sample_allele_columns.items():
-            dbutils.add_column(self.cursor, 'SampleAllele', column, sql_type)
-        for column, sql_type in variant_columns.items():
-            dbutils.add_column(self.cursor, 'Variant', column, sql_type)
+        dbutils.add_columns(self.cursor, 'SampleAllele', sample_allele_columns)
+        dbutils.add_columns(self.cursor, 'Variant', variant_columns)
 
         trid = None
         for row in records:
@@ -364,11 +392,11 @@ class TRGTdb:
         """Annotate coverage dropouts based on dropouts file."""
         logging.info('Annotating coverage dropouts')
 
-        dbutils.add_column(self.cursor, 'Variant', 'coverage_dropout', 'TEXT')
+        dbutils.add_columns(self.cursor, 'Variant', {'coverage_dropout': 'TEXT'})
         records = csv.DictReader(dropouts, delimiter='\t', fieldnames=['chrom', 'start', 'end', 'info', 'dropout'])
         for row in records:
             trid, motifs, struc = tuple([_.split('=')[1] for _ in row['info'].split(';')])
-            start = int(row['start']) - 1  # bed to vcf
+            start = int(row['start'])
             dropout = 'FD' if row['dropout'] == 'FullDropout' else 'HD'
             dbutils.smart_execute(
                 self.cursor,
@@ -455,18 +483,19 @@ class TRGTdb:
     def prioritize_and_plot(self, plot=True, priority_rank_max=2, allele_metric='AL'):
         """Add flags to variants based on pathogenicity, population cutoffs, denovo status, impact, etc."""
         logging.info(f"Prioritizing{' and plotting' if plot else ''} variants")
-
-        directory = f'{self.prefix}_plots'
-        plot_prefix = f"{directory}/{self.prefix.split('/')[-1]}"
-        Path(directory).mkdir(parents=True, exist_ok=True)
+        if plot:
+            directory = f'{self.prefix}_plots'
+            utils.silent_remove(directory)
+            plot_prefix = f"{directory}/{self.prefix.split('/')[-1]}"
+            Path(directory).mkdir(parents=True, exist_ok=True)
 
         if 'phenotype' in self.gene_lookup_labels:
             sorted_phenotypes = dbutils.smart_execute(self.cursor, 'SELECT phenotype FROM Gene').fetchall()
             sorted_phenotypes = sorted([_[0] for _ in sorted_phenotypes if _[0] is not None and _[0] > 0], reverse=True)
-            cutoff50 = np.percentile(sorted_phenotypes, 50)
+            phenotype_cutoff = np.percentile(sorted_phenotypes, 90)
         else:
             sorted_phenotypes = []
-            cutoff50 = None
+            phenotype_cutoff = None
 
         dbutils.smart_execute(
             self.cursor,
@@ -491,7 +520,7 @@ class TRGTdb:
         for row in results:
             row_dict = {col: row[col_names.index(col)] for col in col_names}
             variant_id = row_dict['variant_id']
-            parsed_row = FlagFilter(row_dict, sorted_phenotypes, cutoff50)
+            parsed_row = FlagFilter(row_dict, sorted_phenotypes, phenotype_cutoff)
 
             dbutils.smart_execute(
                 self.cursor,
@@ -508,7 +537,6 @@ class TRGTdb:
                 and parsed_row.rank <= priority_rank_max
                 and 'population_monomorphic' not in parsed_row.flags
             ):
-                # TODO: if pathogenic, maybe use MC instead of AL?
                 trgtplots.PopHist(
                     title=f'TRID: {variant_id}',
                     pop_al=row_dict['pop_allele_length_genotypes'],
@@ -520,14 +548,13 @@ class TRGTdb:
                     sample_colors=[sample[2] for sample in plot_settings],
                 )
 
-    def create_filtered_database(self, pathogenic=False):
+    def create_filtered_database(self, pathogenic=False, no_db=False):
         """Create a filtered database from the main database."""
         logging.info('Creating filtered database')
-        # TODO: requires views TRGT_filtered and TRGT_pathogenic
-        # TODO: add in-memory only option
+        # requires view TRGT_filtered
 
-        filtered_db = f'{self.prefix}.filtered.db'
-        humanatee.silent_remove(filtered_db)
+        filtered_db = '' if no_db else f'{self.prefix}.filtered.db'
+        utils.silent_remove(filtered_db)
         dbutils.smart_execute(self.cursor, f'ATTACH DATABASE "{filtered_db}" AS filtered')
         dbutils.smart_execute(self.cursor, 'SELECT sql FROM sqlite_master')
         sql = self.cursor.fetchall()
@@ -604,8 +631,8 @@ class FlagFilter:
                 self.filter_dropouts(row['father_dropout'], 'father_dropout')
         if 'coverage_dropout' in row.keys():
             self.filter_dropouts(row['coverage_dropout'], 'coverage_dropout')
-        if 'highest_impact' in row.keys():
-            self.flag_impact(row['highest_impact'])
+        if 'highest_consequence' in row.keys():
+            self.flag_impact(row['highest_consequence'])
         if 'phenotype' in row.keys():
             self.flag_phenotype(row['phenotype'], sorted_phenotypes, phenotype_cutoff)
         self.flags = ';'.join(self.flags)
@@ -640,7 +667,7 @@ class FlagFilter:
             return
         sample_alleles = [int(_) for _ in sample_al_string.split(',')]
         unique_alleles = set(
-            humanatee.flatten(
+            utils.flatten(
                 [genotype.split(',') for genotype in Counter(json.loads(pop_allele_lengths)).keys() if genotype != '']
             )
         )
@@ -662,12 +689,12 @@ class FlagFilter:
         """Flag high and moderate impact variants."""
         if not impact:
             return
-        if 'HIGH' in impact:
-            self.flags.append('impact=high')
-        elif 'MODERATE' in impact:
-            self.flags.append('impact=moderate')
+        if any([substring in impact for substring in ['CDS', 'UTR']]):
+            self.flags.append('impact=exon')
+        # elif 'intron' in impact:
+        #     self.flags.append('impact=intron')
 
-    def flag_phenotype(self, phenotype_string, sorted_phenotypes, cutoff50):
+    def flag_phenotype(self, phenotype_string, sorted_phenotypes, cutoff):
         """Flag variants with high phenotype scores."""
         if not phenotype_string or len(sorted_phenotypes) == 0:
             return
@@ -675,7 +702,7 @@ class FlagFilter:
         if len(phenotype_list) == 0:
             return
         max_phenotype = max(phenotype_list)
-        if max_phenotype >= cutoff50:
+        if max_phenotype >= cutoff:
             self.flags.append(f'phenotype={sorted_phenotypes.index(max_phenotype) + 1}/{len(sorted_phenotypes)}')
 
     def filter_SD(self, SD, AL):
@@ -764,7 +791,12 @@ def parse_args(cmdargs):
     requiredNamed.add_argument('--prefix', metavar='PREFIX', required=True, type=str, help='Prefix for files')
     # optional named arguments
     parser.add_argument('--pathogenic-tsv', metavar='TSV', type=argparse.FileType('r'), help='Pathogenic annotations')
-    parser.add_argument('--population-db', metavar='DB', type=str, help='Population cutoffs')
+    parser.add_argument(
+        '--annotation-db',
+        metavar='DB',
+        type=str,
+        help='Database containing population information and/or reference annotations',
+    )
     parser.add_argument('--dropouts', type=argparse.FileType('r'), metavar='TSV', help='Coverage dropouts')
     parser.add_argument(
         '--gene-lookup',
@@ -788,6 +820,7 @@ def parse_args(cmdargs):
     parser.add_argument('--tsv', action='store_true', default=False, help='Write tabular output')
     parser.add_argument('--xlsx', action='store_true', default=False, help='Write Excel output')
     parser.add_argument('--plot', action='store_true', default=False, help='Plot allele length histograms')
+    parser.add_argument('--no-db', action='store_true', default=False, help='Do not output a database file')
     parser.add_argument('--verbose', action='store_true', default=False, help='Verbose logging')
 
     parser._action_groups.reverse()
@@ -795,8 +828,12 @@ def parse_args(cmdargs):
 
     if args.denovo and not any([args.mother, args.father]):
         parser.error('--denovo requires --mother and/or --father.')
-    if args.plot and not args.population_db:
-        parser.error('--plot requires --population-db.')
+    if args.plot and not args.annotation_db:
+        parser.error('--plot requires --annotation-db.')
+    if args.gene_lookup and not args.annotation_db:
+        parser.error('--gene-lookup requires --annotation-db.')
+    if args.phenotype and not args.annotation_db:
+        parser.error('--phenotype requires --annotation-db.')
     return args
 
 
@@ -804,7 +841,7 @@ def trgt_main(cmdargs):
     """Run from command line."""
     args = parse_args(cmdargs)
 
-    humanatee.setup_logging(args.verbose, sys.stderr, show_version=True)
+    utils.setup_logging(args.verbose, sys.stderr, show_version=True)
 
     trgt_db = TRGTdb(
         vcf=args.vcf,
@@ -812,22 +849,29 @@ def trgt_main(cmdargs):
         gene_lookups=args.gene_lookup,
         phenotype=args.phenotype,
         prefix=args.prefix,
+        no_db=args.no_db,
     )
 
-    if args.denovo:
-        trgt_db.annotate_denovos(args.denovo, args.mother, args.father)
-    if args.dropouts:
-        trgt_db.annotate_coverage_dropouts(args.dropouts)
-    if args.pathogenic_tsv:
-        trgt_db.identify_pathogenic_expansions(args.pathogenic_tsv)
-    if args.population_db:
-        trgt_db.identify_population_expansions(args.population_db)
+    trgt_db.annotate_denovos(args.denovo, args.mother, args.father) if args.denovo else None
+    trgt_db.annotate_coverage_dropouts(args.dropouts) if args.dropouts else None
+    trgt_db.identify_pathogenic_expansions(args.pathogenic_tsv) if args.pathogenic_tsv else None
+    if args.annotation_db:
+        pop, csq = trgt_db.load_annotation_db(args.annotation_db)
+        if not pop and args.plot:
+            logging.warning(
+                'Annotation database does not have population columns. '
+                'Population expansion plots will not be generated.'
+            )
+        if not csq and args.gene_lookup:
+            logging.warning(
+                'Annotation database does not have gene consequence information. ' 'Gene lookup will not be performed.'
+            )
+        trgt_db.identify_population_expansions(args.annotation_db) if pop else None
     trgt_db.create_summary_views()
     trgt_db.prioritize_and_plot(args.plot)
-    if args.filter or args.xlsx:
-        trgt_db.create_filtered_database(args.pathogenic_tsv is not None)
-    if args.tsv:
-        trgt_db.write_tabular(args.filter)
-    if args.xlsx:
-        trgt_db.write_xlsx()
+    trgt_db.create_filtered_database(
+        args.pathogenic_tsv is not None, no_db=args.no_db
+    ) if args.filter or args.xlsx else None
+    trgt_db.write_tabular(args.filter) if args.tsv else None
+    trgt_db.write_xlsx() if args.xlsx else None
     trgt_db.commit_and_close()

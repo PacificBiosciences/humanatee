@@ -11,21 +11,22 @@ from humanatee import dbutils, utils
 class VCFdb:
     """Class for managing VCF to database operations."""
 
-    def __init__(self, cursor, vcf, sample_id, source, table_columns, sub_source='', sequence=False, keep_filters=[]):
+    def __init__(
+        self, cursor, vcf, sample_id, source, table_columns, sub_source='', sequence=False, keep_filters=[], csq=True
+    ):
         self.cursor = cursor
         self.vcf = vcf
         self.sample_id = sample_id
         self.source = source
         self.sub_source = sub_source
-        self.record_source = '_'.join([source, sub_source])  # avoids duplicate variant_ids from 2+ paraphase VCFs
+        self.record_source = (
+            f'{source}_{sub_source}' if sub_source else source
+        )  # avoids duplicate variant_ids from 2+ paraphase VCFs
         self.table_columns = utils.flatten(
             [[self.TableColumn(table, *col) for col in cols] for table, cols in table_columns.items()]
         )
         self.csq_format = []
         self.first_record = None
-
-        if 'CSQ' in self.vcf.header.info.keys():
-            self.csq_format = vcf.header.info['CSQ'].description.split('Format: ')[1].split('|')
 
         filename = os.path.join(os.path.dirname(__file__), 'data/ensembl_consequences.tsv')
         self.consequence_order = list(pd.read_csv(filename, sep='\t', header=0)['so_term'])
@@ -43,7 +44,8 @@ class VCFdb:
             logging.info(f'Samples: {self.samples}')
 
         self.add_columns_to_tables()
-        if self.csq_format:
+        if 'CSQ' in self.vcf.header.info.keys() and csq:
+            self.csq_format = vcf.header.info['CSQ'].description.split('Format: ')[1].split('|')
             self.prep_csq()
 
         # iterate through variant records
@@ -72,7 +74,7 @@ class VCFdb:
             case 'trgt':
                 variant_id = record.info['TRID']
             case 'paraphase':
-                variant_id = f'{record.chrom}-{record.start}-{record.ref}-{record.alts[0]}'
+                variant_id = f'{record.chrom}-{record.pos}-{record.ref}-{record.alts[0]}'
             case _:
                 variant_id = record.id
         if isinstance(variant_id, tuple):
@@ -82,11 +84,11 @@ class VCFdb:
     def add_columns_to_tables(self):
         """Add custom columns to tables."""
         for col in self.table_columns:
-            dbutils.add_column(self.cursor, col.table, col.sql_label, col.sql_type)
+            dbutils.add_columns(self.cursor, col.table, {col.sql_label: col.sql_type})
 
         # add haplotype_id if source is paraphase
         if self.source == 'paraphase':
-            dbutils.add_column(self.cursor, 'SampleAllele', 'haplotype_id', 'TEXT')
+            dbutils.add_columns(self.cursor, 'SampleAllele', {'haplotype_id': 'TEXT'})
 
     def prep_csq(self):
         """Prepare CSQ format for parsing."""
@@ -113,7 +115,7 @@ class VCFdb:
                 'source': self.record_source,
                 'variant_id': variant_id,
                 'chrom': record.chrom,
-                'start': record.start,
+                'start': record.pos,
                 'end': record.stop,
             },
         )
@@ -246,7 +248,7 @@ def add_gene_lookups(cursor, gene_lookups, phenotype=None):
     placeholder = tuple(df.to_dict(orient='records'))
     for label in df.columns[1:]:
         sql_type = 'REAL' if label == 'phenotype' else 'TEXT'
-        dbutils.add_column(cursor, 'Gene', label, sql_type)
+        dbutils.add_columns(cursor, 'Gene', {label: sql_type})
     values = f':{", :".join(df.columns)}'
     dbutils.smart_execute(
         cursor,

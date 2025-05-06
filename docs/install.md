@@ -17,7 +17,7 @@ source .venv/bin/activate; uv pip install .
 
 ## From Docker
 
-Humanatee can also be run from a Docker container. The Docker image is available on [Quay.io](https://quay.io/repository/pacbio/humanatee) or can be built locally.
+Humanatee can also be run from a Docker container. The following command can be run to build the docker image locally.
 
 ```bash
 # clone the repo

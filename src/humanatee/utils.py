@@ -109,3 +109,11 @@ def smart_int(x):
 def in_range(x, range):
     """Check if x is in range."""
     return range[0] <= x <= range[1]
+
+
+def open_file(filename, mode='rt'):
+    """Open a file, gzipped or not."""
+    if filename.endswith('.gz'):
+        return gzip.open(filename, mode)
+    else:
+        return open(filename, mode)
