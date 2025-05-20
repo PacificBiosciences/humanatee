@@ -522,22 +522,12 @@ class TRGTdb:
 
         for row in results:
             row_dict = {col: row[col_names.index(col)] for col in col_names}
+            parsed_row = FlagFilter(self.cursor, row_dict, sorted_phenotypes, phenotype_cutoff)
             variant_id = row_dict['variant_id']
-            parsed_row = FlagFilter(row_dict, sorted_phenotypes, phenotype_cutoff)
-
-            dbutils.smart_execute(
-                self.cursor,
-                f"""
-                UPDATE Variant
-                SET priority_rank = '{parsed_row.rank}' {parsed_row.flags} {parsed_row.filters}
-                WHERE variant_id = '{variant_id}'
-                """,
-            )
-
             if (
                 plot
                 and 'pop_upper' in col_names
-                and parsed_row.rank is not None
+                and parsed_row.rank
                 and parsed_row.rank <= priority_rank_max
                 and 'population_monomorphic' not in parsed_row.flags
             ):
@@ -608,7 +598,8 @@ def sum_mc(mc_string, motifs_string=None, target_motifs_string=None):
 class FlagFilter:
     """Filter and flag variants based on pathogenicity, population cutoffs, denovo status, impact, etc."""
 
-    def __init__(self, row, sorted_phenotypes, phenotype_cutoff):
+    def __init__(self, cursor, row, sorted_phenotypes, phenotype_cutoff):
+        self.cursor = cursor
         self.flags = []
         self.filters = []
         self.ignore = False
@@ -641,11 +632,24 @@ class FlagFilter:
         if 'phenotype' in row.keys():
             self.flag_phenotype(row['phenotype'], sorted_phenotypes, phenotype_cutoff)
         self.flags = ';'.join(self.flags)
-        self.flags = f", flags = '{self.flags}'" if self.flags else ''
+        self.flags = f"flags = '{self.flags}'" if self.flags else ''
         self.filters = ';'.join(self.filters)
-        self.filters = f", filters = '{self.filters}'" if self.filters else ''
+        self.filters = f"filters = '{self.filters}'" if self.filters else ''
 
         self.rank_priority()
+        rank_str = f"priority_rank = '{self.rank}'" if self.rank else ''
+
+        if not any([rank_str, self.flags, self.filters]):
+            return
+        set = ', '.join(_ for _ in [rank_str, self.flags, self.filters] if _)
+        dbutils.smart_execute(
+            self.cursor,
+            f"""
+            UPDATE Variant
+            SET {set}
+            WHERE variant_id = '{row['variant_id']}'
+            """,
+        )
 
     def flag_pathogenic(self, pathogenic_locus, pathogenic_genotype, motif_count):
         """Flag pathogenic variants."""
