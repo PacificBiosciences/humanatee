@@ -110,7 +110,7 @@ def merge_dbs(conn, cursor, db_list):
         for row in db2_cursor.fetchall():
             row = {k: v for k, v in zip(required_tables['Variant'], row)}
             try:
-                dbutils.add_table_row(cursor, 'Variant', row, replace=False)
+                dbutils.add_table_row(cursor, 'Variant', row, replace=False, print_query=False)
             except sqlite3.IntegrityError:
                 # handle primary key conflict by replace row
                 cursor.execute(

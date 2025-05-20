@@ -89,7 +89,6 @@ class TestAnnotateTrgt:
         (['--denovo', denovo_trio, '--mother', '--father'], 'SAMPLE1.trgt.humanatee.db', True),
         (['--pathogenic-tsv', pathogenic, '--filter', '--tsv'], 'SAMPLE1.trgt.humanatee.filtered.tsv', True),
         (['--dropouts', dropouts], 'SAMPLE1.trgt.humanatee.db', True),
-        (['--xlsx'], 'SAMPLE1.trgt.humanatee.filtered.xlsx', True),
         (['--tsv'], 'SAMPLE1.trgt.humanatee.tsv', True),
         (['--annotation-db', annodb], 'SAMPLE1.trgt.humanatee.db', True),
         (['--annotation-db', annodb, '--plot'], 'SAMPLE1.trgt.humanatee.db', True),

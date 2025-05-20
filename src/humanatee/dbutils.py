@@ -8,21 +8,21 @@ from importlib import resources
 from humanatee import utils
 
 
-def smart_execute(cursor, query, values=(), many=False, always_print=False):
+def smart_execute(cursor, query, values=(), many=False, print_query='error'):
     """Print SQL query if execution fails."""
-    if always_print:
+    if print_query is True:
         logging.info(f'{query}\n{values}')
     if many:
         try:
             cursor.executemany(query, values)
         except Exception as e:
-            logging.error(f'Error executing query:\n{query}')
+            logging.error(f'Error executing query:\n{query}') if print_query is not False else None
             raise e
     else:
         try:
             cursor.execute(query, values)
         except Exception as e:
-            logging.error(f'Error executing query:\n{query}')
+            logging.error(f'Error executing query:\n{query}') if print_query is not False else None
             raise e
     return cursor
 
@@ -62,7 +62,7 @@ def add_columns(cursor, table, column_type_dict, raise_error=False):
                 raise e
 
 
-def add_table_row(cursor, table, fields_dict, update_conflict='', replace=False):
+def add_table_row(cursor, table, fields_dict, update_conflict='', replace=False, print_query='error'):
     """Add a row to a SQL table with fields defined in dict."""
     if fields_dict == {}:
         return
@@ -83,6 +83,7 @@ def add_table_row(cursor, table, fields_dict, update_conflict='', replace=False)
         {update_conflict}
         """,
         (*fields_dict.values(),),
+        print_query=print_query,
     )
 
 

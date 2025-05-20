@@ -20,6 +20,14 @@ As Humanatee is not covered by any service level agreement or the like, please d
 
 ## Changelog
 
+* 0.2.1
+  * Flag and filter all pathogenic loci even when sample doesn't have pathogenic genotype (important when a lack of a genotype is informative)
+  * Output pathogenic specific tsv when using `--tsv` flag
+  * Make refanno compatible with comma separated TRIDs
+  * Avoid printing irrelevant errors when running trgtpop
+  * Fix bug where motifs and struc weren't being output as columns tsv files
+  * Remove xlsx output option
+  * Add resource for PureTarget pathogenic annotations
 * 0.2.0
   * Replace VEP requirement for gene annotation with `humanatee refanno` command that can be run a single time for a catalog.
 * 0.1.1

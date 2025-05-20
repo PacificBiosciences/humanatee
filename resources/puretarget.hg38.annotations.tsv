@@ -1,0 +1,21 @@
+chrom	start	end	info	pathogenic_motifs	normal_min	normal_max	pathogenic_expansion_min	pathogenic_contraction_max	disease_gene	disease_id	disease_name	inheritance	omim	notes	follow_up
+chrX	67545316	67545385	ID=AR;MOTIFS=GCA;STRUC=(GCA)n	GCA	9	34	38		AR	SBMA	Spinal and bulbar muscular atrophy/ Kennedy Disease	XR	313200
+chr12	6936716	6936773	ID=ATN1;MOTIFS=CAG;STRUC=(CAG)n	CAG	3	35	48		ATN1	DRPLA	Dentatorubral-Pallidoluysian Atrophy	AD	125370
+chr6	16327633	16327723	ID=ATXN1;MOTIFS=TGC;STRUC=(TGC)n	TGC	6	35	39		ATXN1	SCA1	Spinocerebellar Ataxia Type 1	AD	164400
+chr22	45795354	45795424	ID=ATXN10;MOTIFS=ATTCT;STRUC=(ATTCT)n	ATTCT	10	32	800		ATXN10	SCA10	Spinocerebellar Ataxia Type 10	AD	603516
+chr12	111598949	111599018	ID=ATXN2;MOTIFS=GCT;STRUC=(GCT)n	GCT	14	26	35		ATXN2	SCA2	Spinocerebellar Ataxia Type 2	AD/AR	183090	Alleles with up to 31 copies are commonly found in the population, but there is also evidence of increased ALS risk associated with 27-33 copies.
+chr14	92071009	92071042	ID=ATXN3;MOTIFS=GCT;STRUC=(GCT)n	GCT	12	44	60		ATXN3	SCA3/MJD	Spinocerebellar Ataxia Type 3/Machado-Joseph Disease	AD	109150
+chr3	63912684	63912726	ID=ATXN7;MOTIFS=GCA,GCC;STRUC=(GCA)n(GCC)n	GCA	4	19	34		ATXN7	SCA7	Spinocerebellar Ataxia Type 7	AD	164500
+chr13	70139353	70139428	ID=ATXN8;MOTIFS=CTA,CTG;STRUC=(CTA)n(CTG)n	CTG	2	37	80		ATXN8OS	SCA8	Spinocerebellar Ataxia Type 8	AD	608768	Penetrance is highly variable, making it difficult to determine a precise pathogenic threshold.
+chr9	27573528	27573546	ID=C9ORF72;MOTIFS=GGCCCC;STRUC=(GGCCCC)n	GGCCCC	2	23	31		C9ORF72	FTDALS1	Frontotemporal dementia (FTD) and/or amyotrophic lateral sclerosis (ALS)	AD	105500	Normal and pathogenic ranges are not very well defined and vary across resources.
+chr19	13207858	13207897	ID=CACNA1A;MOTIFS=CTG;STRUC=(CTG)n	CTG	4	18	20		CACNA1A	SCA6	Spinocerebellar Ataxia Type 6	AD	183086
+chr3	129172576	129172732	ID=CNBP;MOTIFS=CAGG,CAGA,CA;STRUC=(CAGG)n(CAGA)n(CA)n	CAGG	11	26	55		CNBP	DM2	Myotonic Dystrophy Type 2	AD	602668	Interruption by other motifs like CAGA can increase stability of allele
+chr19	45770204	45770264	ID=DMPK;MOTIFS=CAG;STRUC=(CAG)n	CAG	5	34	50		DMPK	DM1	Myotonic Dystrophy Type 1	AD	160900	Interruption with other motifs like CCG and CGG may be associated with later onset and milder phenotype.
+chrX	147912050	147912110	ID=FMR1;MOTIFS=CGG;STRUC=(CGG)n	CGG	5	44	55		FMR1	FXS, FXTAS, FXPOI	Fragile X syndrome (FXS), fragile X-associated tremor/ataxia syndrome (FXTAS), and fragile X-associated primary ovarian insufficiency (FXPOI/POF1)	XD	300624,300623	FXTAS and FXPOI are pathogenic at 55 copies or higher. FXS is pathogenic at 200 copies or higher.
+chr9	69037261	69037304	ID=FXN;MOTIFS=A,GAA;STRUC=(A)n(GAA)n	GAA	5	33	66		FXN	FRDA	Friedreich ataxia	AR	229300
+chr4	3074876	3074966	ID=HTT;MOTIFS=CAG,CCG;STRUC=(CAG)nCAACAG(CCG)n	CAG	6	26	40		HTT	HD	Huntington disease	AD	143100	The number of  CCG repeats may be a risk factor for CAG instability.
+chr14	23321472	23321502	ID=PABPN1;MOTIFS=GCG;STRUC=(GCG)n	GCN	10	10	11		PABPN1	OPMD	Oculopharyngeal muscular dystrophy	AD/AR	164300	AR for 11 repeats, AD >12 repeats. Most known patients have (GCG)+, but GCN or any polyalanine may be pathogenic
+chr5	146878727	146878757	ID=PPP2R2B;MOTIFS=GCT;STRUC=(GCT)n	GCT	4	31	51		PPP2R2B	SCA12	Spinocerebellar ataxia type 12	AD	604326
+chr4	39348424	39348479	ID=RFC1;MOTIFS=AAAAG,AAAGG,AAGGG,AAGAG,AGAGG,AACGG,GGGAC,AAAGGG;STRUC=<RFC1>	AAGGG	0	0	400		RFC1	CANVAS	Cerebellar ataxia, neuropathy, and vestibular areflexia syndrome	AR	614575
+chr6	170561906	170562017	ID=TBP;MOTIFS=GCA;STRUC=(GCA)n	GCA	25	42	43		TBP	SCA17	Spinocerebellar ataxia type 17	AD	607136
+chr18	55586155	55586227	ID=TCF4;MOTIFS=CAG;STRUC=(CAG)n	CAG	10	40	50		TCF4	FECD3	Fuchs endothelial corneal dystrophy 3	AD	613267	Penetrance is <100%; reduced penetrance has been reported in individuals with >80 CTG repeats.

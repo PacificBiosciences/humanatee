@@ -5,8 +5,8 @@ chrom	Chromosome	default
 start	Start position of locus	default
 end	End position of locus	default
 variant_id	TRGT ID	default
-struc	Structure of the repeat	default
-motifs	Motifs in tandem repeat	default
+STRUC	Structure of the repeat	default
+MOTIFS	Motifs in tandem repeat	default
 PS	Phase set	default
 SD	Number of reads spanning each allele	default
 MC	Count of motifs of each TR on each allele	default

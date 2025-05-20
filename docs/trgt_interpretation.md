@@ -3,7 +3,7 @@
 
 - [Output Files](#output-files)
 - [Understanding `.db` files](#understanding-db-files)
-- [Understanding `.tsv` and `.xlsx` files](#understanding-tsv-and-xlsx-files)
+- [Understanding `.tsv` files](#understanding-tsv-files)
 - [Plots](#plots)
 
 ## Output Files
@@ -13,19 +13,19 @@ The output files include the following:
 | File | Description | Option |
 | --- | --- | --- |
 | [`<prefix>.db`](#understanding-db-files) | SQLite database containing all variants and annotations | Default |
-| [`<prefix>.tsv`](#understanding-tsv-and-xlsx-files) | Summarized TSV version of `<prefix.db>` | `--tsv` |
+| [`<prefix>.tsv`](#understanding-tsv-files) | Summarized TSV version of `<prefix.db>` | `--tsv` |
 | [`<prefix>.filtered.db`](#understanding-db-files) | SQLite database containing only variants with outlier alleles (if `--population-db` is used) and variants with pathogenic/premutation alleles (if `--pathogenic-tsv` is used) | `--filter` |
-| [`<prefix>.filtered.tsv`](#understanding-tsv-and-xlsx-files) | Summarized TSV version of `<prefix>.filtered.db` | `--filter --tsv` |
-| [`<prefix>.filtered.xlsx`](#understanding-tsv-and-xlsx-files) | XLSX version of `<prefix>.filtered.tsv` | `--filter --xlsx` |
+| [`<prefix>.pathogenic.tsv`](#understanding-tsv-files) | TSV output for only those loci matching annotations in `--pathogenic-tsv` | `--pathogenic-tsv <FILE> --tsv` |
+| [`<prefix>.filtered.tsv`](#understanding-tsv-files) | Summarized TSV version of `<prefix>.filtered.db` | `--filter --tsv` |
 | [`<prefix>_plots/<prefix>.*.png`](#plots) | Plots of repeat allele lengths and motif counts | `--plot` |
 
 ## Understanding `.db` files
 
 The SQLite database contains all the information from the VCF file, as well as all additional annotations. It is a useful format for querying the data using SQL or browsing the data interactively using a tool like [DB Browser for SQLite](https://sqlitebrowser.org/).
 
-However, unless you are familiar with SQLite and associated tools, you may find it easier to work with the `<prefix>.filtered.tsv` or `<prefix>.filtered.xlsx` files, which contain a subset of the data that is most relevant for interpreting the results.
+However, unless you are familiar with SQLite and associated tools, you may find it easier to work with the `<prefix>.filtered.tsv` or `<prefix>.pathogenic.tsv` files, which contain a subset of the data that is most relevant for interpreting the results.
 
-## Understanding `.tsv` and `.xlsx` files
+## Understanding `.tsv` files
 
 A description of all possible columns can be found in [trgt_columns.tsv](../src/humanatee/data/trgt_columns.tsv). This file lists the column name (col1), a description (col2), and the source of the data (col3). The source of the data can be one of the following:
 

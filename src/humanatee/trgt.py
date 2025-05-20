@@ -70,7 +70,7 @@ class TRGTdb:
         self.cursor.close()
         self.conn.close()
 
-    def write_tabular(self, filter):
+    def write_tabular(self, filter, pathogenic):
         """Write TRGT data and filtered data to TSVs."""
         logging.info('Writing tabular output')
         results = dbutils.smart_execute(self.cursor, 'SELECT * FROM TRGT_main').fetchall()
@@ -81,13 +81,9 @@ class TRGTdb:
         if filter:
             df = pd.read_sql_query('SELECT * FROM TRGT_filtered', self.conn)
             df.to_csv(f'{self.prefix}.filtered.tsv', index=False, sep='\t')
-
-    def write_xlsx(self):
-        """Write TRGT filtered data to Excel."""
-        logging.info('Writing Excel output')
-        df = pd.read_sql_query('SELECT * FROM TRGT_filtered', self.conn)
-        with pd.ExcelWriter(f'{self.prefix}.filtered.xlsx') as writer:
-            df.to_excel(writer, sheet_name='repeats', index=False)
+        if pathogenic:
+            df = pd.read_sql_query('SELECT * FROM TRGT_pathogenic', self.conn)
+            df.to_csv(f'{self.prefix}.pathogenic.tsv', index=False, sep='\t')
 
     def __load_pathogenic_info__(self, anno_tsv):
         """Load pathogenic annotations into Variant table."""
@@ -479,6 +475,13 @@ class TRGTdb:
                 ORDER BY v.chrom, v.start);
                 """,
             )
+        dbutils.smart_execute(
+            self.cursor,
+            f"""
+            CREATE TEMP VIEW TRGT_flag_filter AS
+            SELECT * FROM TRGT_main {conditions} {'OR variant_id IN (SELECT variant_id FROM TRGT_pathogenic)' if 'pathogenic' in columns else ''};
+            """,
+        )
 
     def prioritize_and_plot(self, plot=True, priority_rank_max=2, allele_metric='AL'):
         """Add flags to variants based on pathogenicity, population cutoffs, denovo status, impact, etc."""
@@ -504,7 +507,7 @@ class TRGTdb:
                     v.*, m.*
                 FROM Variant as v
                 JOIN
-                TRGT_filtered as m
+                TRGT_flag_filter as m
                 ON v.variant_id = m.variant_id;
                 """,
         )
@@ -534,6 +537,7 @@ class TRGTdb:
             if (
                 plot
                 and 'pop_upper' in col_names
+                and parsed_row.rank is not None
                 and parsed_row.rank <= priority_rank_max
                 and 'population_monomorphic' not in parsed_row.flags
             ):
@@ -607,10 +611,11 @@ class FlagFilter:
     def __init__(self, row, sorted_phenotypes, phenotype_cutoff):
         self.flags = []
         self.filters = []
+        self.ignore = False
 
-        self.filter_SD(row['SD'], row['AL'])
         if 'pathogenic' in row.keys():
-            self.flag_pathogenic(row['pathogenic'])
+            self.flag_pathogenic(row['normal_min'] is not None, row['pathogenic'], row['MC'])
+        self.filter_SD(row['SD'], row['AL'])
         if 'expanded' in row.keys():
             self.flag_zygosity(row['expanded'])
             self.flag_allele_lengths(
@@ -640,16 +645,21 @@ class FlagFilter:
         self.filters = ';'.join(self.filters)
         self.filters = f", filters = '{self.filters}'" if self.filters else ''
 
-        self.rank_priority(self.flags, self.filters)
+        self.rank_priority()
 
-    def flag_pathogenic(self, pathogenic_genotype):
+    def flag_pathogenic(self, pathogenic_locus, pathogenic_genotype, motif_count):
         """Flag pathogenic variants."""
-        if not pathogenic_genotype:
+        if not pathogenic_locus:
+            return
+        if not motif_count:
+            self.flags.append('missing_genotype_pathogenic_locus')
             return
         if 'Pathogenic' in pathogenic_genotype:
             self.flags.append('pathogenic')
         elif 'Premutation' in pathogenic_genotype:
             self.flags.append('premutation')
+        else:
+            self.ignore = True
 
     def flag_zygosity(self, expanded_genotype):
         """Flag biallelic and hemizygous variants."""
@@ -748,29 +758,34 @@ class FlagFilter:
                 if float(child_ratio) < 0.3 or float(child_ratio) > 0.7:
                     self.filters.append('child_ratio')
 
-    def rank_priority(self, flags, filters):
+    def rank_priority(self):
         """Rank variants based on flags and filters."""
+        if self.ignore:
+            self.rank = None
+            return
         self.rank = 4
-        if flags:
-            if 'mode=' in flags:
+        if self.flags:
+            if 'mode=' in self.flags:
                 modes = 0
-                if 'mode=denovo' in flags and not any(
+                if 'mode=denovo' in self.flags and not any(
                     [
-                        filter in filters
+                        filter in self.filters
                         for filter in ['allele_ratio', 'child_ratio', 'father_dropout', 'mother_dropout']
                     ]
                 ):
                     modes = 1
-                if 'mode=biallelic' in flags or 'mode=hemizygous' in flags:
+                if 'mode=biallelic' in self.flags or 'mode=hemizygous' in self.flags:
                     modes = 1
                 self.rank -= modes
-            if 'impact=' in flags or 'misc=' in flags:
+            if 'impact=' in self.flags or 'misc=' in self.flags:
                 self.rank -= 1
-            if 'phenotype=' in flags:
+            if 'phenotype=' in self.flags:
                 self.rank -= 1
-            if 'pathogenic' in flags or 'premutation' in flags:
+            if any(
+                [string in self.flags for string in ['pathogenic', 'premutation', 'missing_genotype_pathogenic_locus']]
+            ):
                 self.rank = 1
-            elif 'SD' in filters or 'coverage_dropout' in filters:
+            elif 'SD' in self.filters or 'coverage_dropout' in self.filters:
                 self.rank = 4
 
 
@@ -818,7 +833,6 @@ def parse_args(cmdargs):
     parser.add_argument('--father', action='store_true', default=False, help='Father used for denovo')
     parser.add_argument('--filter', action='store_true', default=False, help='Create filtered database')
     parser.add_argument('--tsv', action='store_true', default=False, help='Write tabular output')
-    parser.add_argument('--xlsx', action='store_true', default=False, help='Write Excel output')
     parser.add_argument('--plot', action='store_true', default=False, help='Plot allele length histograms')
     parser.add_argument('--no-db', action='store_true', default=False, help='Do not output a database file')
     parser.add_argument('--verbose', action='store_true', default=False, help='Verbose logging')
@@ -869,9 +883,6 @@ def trgt_main(cmdargs):
         trgt_db.identify_population_expansions(args.annotation_db) if pop else None
     trgt_db.create_summary_views()
     trgt_db.prioritize_and_plot(args.plot)
-    trgt_db.create_filtered_database(
-        args.pathogenic_tsv is not None, no_db=args.no_db
-    ) if args.filter or args.xlsx else None
-    trgt_db.write_tabular(args.filter) if args.tsv else None
-    trgt_db.write_xlsx() if args.xlsx else None
+    trgt_db.create_filtered_database(args.pathogenic_tsv is not None, no_db=args.no_db) if args.filter else None
+    trgt_db.write_tabular(args.filter, args.pathogenic_tsv is not None) if args.tsv else None
     trgt_db.commit_and_close()

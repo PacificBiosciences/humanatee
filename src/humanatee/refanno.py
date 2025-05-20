@@ -366,8 +366,11 @@ def annotate_variants(cursor, variants, anno_sources):
 def parse_trgt_variant(record, chrom_sort_order=None):
     """Parse a TRGT VCF record."""
     chrom_idx = chrom_sort_order.index(record.chrom) if chrom_sort_order else record.chrom
+    variant_id = record.info['TRID']
+    if isinstance(variant_id, tuple):
+        variant_id = ','.join(variant_id)
     return Variant(
-        record.info['TRID'],
+        variant_id,
         'trgt',
         record.chrom,
         chrom_idx,
