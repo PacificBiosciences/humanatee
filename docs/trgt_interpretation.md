@@ -14,7 +14,7 @@ The output files include the following:
 | --- | --- | --- |
 | [`<prefix>.db`](#understanding-db-files) | SQLite database containing all variants and annotations | Default |
 | [`<prefix>.tsv`](#understanding-tsv-files) | Summarized TSV version of `<prefix.db>` | `--tsv` |
-| [`<prefix>.filtered.db`](#understanding-db-files) | SQLite database containing only variants with outlier alleles (if `--population-db` is used) and variants with pathogenic/premutation alleles (if `--pathogenic-tsv` is used) | `--filter` |
+| [`<prefix>.filtered.db`](#understanding-db-files) | SQLite database containing only variants with outlier alleles (if `--annotation-db` is used) and variants with pathogenic/premutation alleles (if `--pathogenic-tsv` is used) | `--filter` |
 | [`<prefix>.pathogenic.tsv`](#understanding-tsv-files) | TSV output for only those loci matching annotations in `--pathogenic-tsv` | `--pathogenic-tsv <FILE> --tsv` |
 | [`<prefix>.filtered.tsv`](#understanding-tsv-files) | Summarized TSV version of `<prefix>.filtered.db` | `--filter --tsv` |
 | [`<prefix>_plots/<prefix>.*.png`](#plots) | Plots of repeat allele lengths and motif counts | `--plot` |
@@ -34,7 +34,7 @@ A description of all possible columns can be found in [trgt_columns.tsv](../src/
 | default | A default output column |
 | denovo | `--denovo` |
 | pathogenic-tsv | `--pathogenic-tsv` |
-| population-db | `--population-db` |
+| annotation-db | `--annotation-db` |
 | dropouts | `--dropouts` |
 
 The most important columns are `priority_rank`, `flags`, and `filters`, which are used to prioritize the variants. The `priority_rank` column is a numeric value that is used to sort variants, with lower values indicating higher priority (`1`=highest priority, `4`=lowest priority).
@@ -56,7 +56,7 @@ The following table shows the specific flags and filters that can affect the `pr
 
 ## Plots
 
-Population allele histograms are produced if the `--population-db` and `--plot` options are used. These plots show the distribution of allele lengths for each repeat allele in the population database compared to the sample allele lengths (and parents when `--denovo` is used). Plots are only generated when `priority_rank ≥ 2`.
+Population allele histograms are produced if the `--annotation-db` and `--plot` options are used. These plots show the distribution of allele lengths for each repeat allele in the population database compared to the sample allele lengths (and parents when `--denovo` is used). Plots are only generated when `priority_rank ≥ 2`.
 
 An example singleton plot of a dinucleotide repeat:
 
