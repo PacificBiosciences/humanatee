@@ -230,7 +230,7 @@ class PopHist:
         try:
             self.ax2
             ypadding = 0
-        except NameError:
+        except AttributeError:
             ypadding = ybinsize * 3
         ax.set_ylim([0, max(h) + ybinsize + ypadding])
         ax.text(

@@ -1,4 +1,3 @@
-
 # Interpreting TRGT Annotation <!-- omit in toc -->
 
 - [Output Files](#output-files)

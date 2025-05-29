@@ -20,6 +20,8 @@ As Humanatee is not covered by any service level agreement or the like, please d
 
 ## Changelog
 
+* 0.2.2
+  * Fix TRGT plotting error caused by bad exception at haploid loci ([Issue #2](https://github.com/PacificBiosciences/humanatee/issues/2))
 * 0.2.1
   * Flag and filter all pathogenic loci even when sample doesn't have pathogenic genotype (important when a lack of a genotype is informative)
   * Output pathogenic specific tsv when using `--tsv` flag

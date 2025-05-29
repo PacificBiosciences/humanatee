@@ -1,0 +1,57 @@
+chrom	start	end	info	pathogenic_motifs	normal_min	normal_max	pathogenic_expansion_min	pathogenic_contraction_max	disease_gene	disease_id	disease_name	inheritance	omim	notes	follow_up
+chr20	2652733	2652775	ID=NOP56;MOTIFS=GGCCTG,CGCCTG;STRUC=(GGCCTG)n(CGCCTG)n	GGCCTG	3	14	650		NOP56	SCA36	Spinocerebellar ataxia type 36	AD	614153		Unclear if  CGCCTG should be included for pathogenic threshold
+chr4	3074876	3074966	ID=HTT;MOTIFS=CAG,CCG;STRUC=(CAG)nCAACAG(CCG)n	CAG	6	26	40		HTT	HD	Huntington disease	AD	143100	The number of  CCG repeats may be a risk factor for CAG instability.
+chr12	6936716	6936773	ID=ATN1;MOTIFS=CAG;STRUC=(CAG)n	CAG	3	35	48		ATN1	DRPLA	Dentatorubral-Pallidoluysian Atrophy	AD	125370
+chr5	10356346	10356412	ID=MARCHF6;MOTIFS=TTTTA,TTTCA;STRUC=<MARCHF6>	TTTTA,TTTCA	9	20	668		MARCHF6	FAME3	Familial adult myoclonic epilepsy type 3	AD	613608	Insertion of TTTCA is associated with disease, but expansions of endogenous TTTTA have NOT been found in healthy subjects.
+chr19	13207858	13207897	ID=CACNA1A;MOTIFS=CTG;STRUC=(CTG)n	CTG	4	18	20		CACNA1A	SCA6	Spinocerebellar Ataxia Type 6	AD	183086
+chr19	14496041	14496074	ID=GIPC1;MOTIFS=CCG;STRUC=(CCG)n	CCG	6	29	70		GIPC1	OPDM2	Oculopharyngodistal myopathy	AD	618940
+chr6	16327633	16327723	ID=ATXN1;MOTIFS=TGC;STRUC=(TGC)n	TGC	6	35	39		ATXN1	SCA1	Spinocerebellar Ataxia Type 1	AD	164400
+chr16	17470907	17470923	ID=XYLT1;MOTIFS=GCC;STRUC=(GCC)n	GCC	0	72	110		XYLT1	DBQD2/BSS	Desbuquois dysplasia 2/Baratela-Scott Syndrome	AR	615777		Repeat is within a sequence missing from hg38, but these coordinates capture the repeat sequence next to the missing area.
+chr19	18786034	18786050	ID=COMP;MOTIFS=GTC;STRUC=(GTC)n	GTC	6	6	7	5	COMP	EDM1, PSACH	Multiple epiphyseal dysplasia, Pseudoachondroplasia	AD	132400,177170
+chr15	22786677	22786701	ID=NIPA1;MOTIFS=GCG;STRUC=(GCG)n	GCG	6	10	11		NIPA1	ALS1	Amyotrophic lateral sclerosis	AD	105400
+chr14	23321472	23321502	ID=PABPN1;MOTIFS=GCN;STRUC=(GCN)n	GCN	10	10	11		PABPN1	OPMD	Oculopharyngeal muscular dystrophy	AD/AR	164300	AR for 11 repeats, AD >12 repeats. Most known patients have (GCG)+, but GCN or any polyalanine may be pathogenic
+chr16	24613439	24613530	ID=TNRC6A;MOTIFS=TTTTA,TTTCA;STRUC=<TNRC6A>	TTTCA	0	0	29		TNRC6A	FAME6	Familial adult myoclonic epilepsy type 6	AD	618074	Insertion of TTTCA is associated with disease. Expansions of endogenous TTTTA found in healthy subjects.
+chrX	25013649	25013698	ID=ARX;MOTIFS=NGC;STRUC=(NGC)n	NGC	10	16	17		ARX	EIEE1	Early-infantile epileptic encephalopathy	XR	308350,300419,300215
+chr7	27199825	27199862	ID=HOXA13;MOTIFS=NGC;STRUC=(NGC)n	NGC	13	13	18		HOXA13	HFG-II	Hand-foot-genital syndrome 2	AD	140000
+chr9	27573528	27573546	ID=C9ORF72;MOTIFS=GGCCCC;STRUC=(GGCCCC)n	GGCCCC	2	23	31		C9ORF72	FTDALS1	Frontotemporal dementia (FTD) and/or amyotrophic lateral sclerosis (ALS)	AD	105500	Normal and pathogenic ranges are not very well defined and vary across resources.
+chr4	39348424	39348479	ID=RFC1;MOTIFS=AAAAG,AAAGG,AAGGG,AAGAG,AGAGG,AACGG,GGGAC,AAAGGG,CAGGA,CAAGA;STRUC=<RFC1>	AAGGG,CAGGA	0	0	400		RFC1	CANVAS	Cerebellar ataxia, neuropathy, and vestibular areflexia syndrome	AR	614575
+chr4	41745972	41746032	ID=PHOX2B;MOTIFS=GCN;STRUC=(GCN)n	GCN	15	20	25		PHOX2B	CCHS	Congenital central hypoventilation syndrome	AD	209880
+chr21	43776443	43776479	ID=CSTB;MOTIFS=CGCGGGGCGGGG;STRUC=(CGCGGGGCGGGG)n	CGCGGGGCGGGG	2	3	30		CSTB	EPM1/ULD	Progressive Myoclonic Epilepsy Type 1/Unverricht-Lundborg Disease	AR	254800
+chr6	45422750	45422802	ID=RUNX2;MOTIFS=GCN;STRUC=(GCN)n	GCN	4	18	20		RUNX2	CCD	Cleidocranial dysplasia	AD	119600
+chr19	45770204	45770264	ID=DMPK;MOTIFS=CAG;STRUC=(CAG)n	CAG	5	34	50		DMPK	DM1	Myotonic Dystrophy Type 1	AD	160900	Interruption with other motifs like CCG and CGG may be associated with later onset and milder phenotype.
+chr22	45795354	45795424	ID=ATXN10;MOTIFS=ATTCT;STRUC=(ATTCT)n	ATTCT	10	32	800		ATXN10	SCA10	Spinocerebellar Ataxia Type 10	AD	603516
+chr12	50505001	50505022	ID=DIP2B;MOTIFS=GGC;STRUC=(GGC)n	GGC	6	23	273		DIP2B	FRA12A	Intellectual developmental disorder, FRA12A type	AD	136630
+chr18	55586155	55586227	ID=TCF4;MOTIFS=CAG;STRUC=(CAG)n	CAG	10	40	50		TCF4	FECD3	Fuchs endothelial corneal dystrophy 3	AD	613267	Penetrance is <100%; reduced penetrance has been reported in individuals with >80 CTG repeats.
+chr7	55887601	55887640	ID=ZNF713;MOTIFS=CGG;STRUC=(CGG)n	CGG	5	22	450		ZNF713	FRA7A	Autism spectrum disorder associated with fragile site FRA7A	AD	616181
+chr1	57367043	57367119	ID=DAB1;MOTIFS=AAAAT,GAAAT;STRUC=<DAB1>	GAAAT	0	0	31		DAB1	SCA37	Spinocerebellar Ataxia Type 37	AD	615945	Insertion of GAAAT is associated with disease. Expansions of endogenous AAAAT found in healthy subjects.
+chr3	63912684	63912726	ID=ATXN7;MOTIFS=GCA,GCC;STRUC=(GCA)n(GCC)n	GCA	4	19	34		ATXN7	SCA7	Spinocerebellar Ataxia Type 7	AD	164500
+chr16	66490398	66490467	ID=BEAN1;MOTIFS=TGGAA,TAAAA;STRUC=<BEAN1>	TGGAA	0	0	110		BEAN1	SCA31	Spinocerebellar Ataxia Type 31	AD	117210	Insertion of TGGAA is associated with disease. Expansions of endogenous TAAAA found in healthy subjects.
+chr11	66744821	66744850	ID=C11ORF80;MOTIFS=GCG;STRUC=(GCG)n	GCG	8	16	17		C11ORF80	FRA11A	Folate-sensitive fragile site FRA11A	AD/AR	616109		Pathogenic threshold unclear
+chrX	67545316	67545385	ID=AR;MOTIFS=GCA;STRUC=(GCA)n	GCA	9	34	38		AR	SBMA	Spinal and bulbar muscular atrophy/ Kennedy Disease	XR	313200
+chr9	69037261	69037304	ID=FXN;MOTIFS=A,GAA;STRUC=(A)n(GAA)n	GAA	5	33	66		FXN	FRDA	Friedreich ataxia	AR	229300
+chr13	70139353	70139428	ID=ATXN8;MOTIFS=CTA,CTG;STRUC=(CTA)n(CTG)n	CTG	2	37	80		ATXN8OS	SCA8	Spinocerebellar Ataxia Type 8	AD	608768	Penetrance is highly variable, making it difficult to determine a precise pathogenic threshold.
+chr10	79826383	79826404	ID=NUTM2B-AS1;MOTIFS=CGG;STRUC=(CGG)n	CGG	3	16	35		NUTM2B-AS1	OPML1	Oculopharyngeal myopathy with leukoencephalopathy 1	AD	618637
+chr16	87604287	87604329	ID=JPH3;MOTIFS=CTG;STRUC=(CTG)n	CTG	6	28	40		JPH3	HDL2	Huntington disease-like 2	AD	606438
+chr14	92071009	92071042	ID=ATXN3;MOTIFS=GCT;STRUC=(GCT)n	GCT	12	44	60		ATXN3	SCA3/MJD	Spinocerebellar Ataxia Type 3/Machado-Joseph Disease	AD	109150
+chr10	93702522	93702547	ID=FRA10AC1;MOTIFS=CCG;STRUC=(CCG)n	CCG	8	35	200		FRA10AC1	FRA10A	Folate-sensitive fragile site FRA10A	AD/AR	608866
+chr2	96197066	96197122	ID=STARD7;MOTIFS=TGAAA,TAAAA;STRUC=<STARD7>	TGAAA	0	0	274		STARD7	FAME2	Familial adult myoclonic epilepsy 2	AD	607876
+chr13	99985448	99985494	ID=ZIC2;MOTIFS=GCN;STRUC=(GCN)n	GCN	16	16	25		ZIC2	HPE5	Holoprosencephaly-5	AD	609637
+chr2	100104799	100104824	ID=AFF3;MOTIFS=GCC;STRUC=(GCC)n	GCC	3	20	300		AFF3	FRA2A	Intellectual disability associated with fragile site FRA2A	AD	601464
+chr8	104588972	104589000	ID=LRP12;MOTIFS=CCG;STRUC=(CCG)n	CCG	13	45	90		LRP12	OPDM1	Oculopharyngodistal myopathy type 1	AD	164310
+chr12	111598949	111599018	ID=ATXN2;MOTIFS=GCT;STRUC=(GCT)n	GCT	14	26	35		ATXN2	SCA2	Spinocerebellar Ataxia Type 2	AD/AR	183090	Alleles with up to 31 copies are commonly found in the population, but there is also evidence of increased ALS risk associated with 27-33 copies.
+chr8	118366815	118366919	ID=SAMD12;MOTIFS=TGAAA,TAAAA;STRUC=(TGAAA)n(TAAAA)n	TGAAA	0	0	100		SAMD12	FAME1	Familial adult myoclonic epilepsy type 1	AD	601068	Insertion of TGAAA is associated with disease. Expansions of endogenous TAAAA found in healthy subjects.
+chr11	119206289	119206322	ID=CBL;MOTIFS=CGG;STRUC=(CGG)n	CGG	11	79	100		CBL	JBS	Jacobsen syndrome (FRAX11B fragile site)	AD	147791
+chr3	129172576	129172732	ID=CNBP;MOTIFS=CAGG,CAGA,CA;STRUC=<CNBP>	CAGG	11	26	55		CNBP	DM2	Myotonic Dystrophy Type 2	AD	602668	Interruption by other motifs like CAGA can increase stability of allele
+chr3	138946020	138946063	ID=FOXL2;MOTIFS=NGC;STRUC=(NGC)n	NGC	15	15	16		FOXL2	BPES	Blepharophimosis, epicanthus inversus, and ptosis	AD	110100
+chrX	140504316	140504362	ID=SOX3;MOTIFS=NGC;STRUC=(NGC)n	NGC	15	15	22	8	SOX3	XLMR	X-linked panhypopituitarism,  X-linked mental retardation with isolated growth hormone	XR	300123,312000
+chr1	146228800	146228821	ID=NOTCH2NLA;MOTIFS=GCC;STRUC=(GCC)n	GCC	7	7	8		NOTCH2NLA						Can't find info on thresholds, associated disease
+chr5	146878727	146878757	ID=PPP2R2B;MOTIFS=GCT;STRUC=(GCT)n	GCT	4	31	51		PPP2R2B	SCA12	Spinocerebellar ataxia type 12	AD	604326
+chrX	147912050	147912110	ID=FMR1;MOTIFS=CGG;STRUC=(CGG)n	CGG	5	44	55		FMR1	FXS, FXTAS, FXPOI	Fragile X syndrome (FXS), fragile X-associated tremor/ataxia syndrome (FXTAS), and fragile X-associated primary ovarian insufficiency (FXPOI/POF1)	XD	300624,300623	FXTAS and FXPOI are pathogenic at 55 copies or higher. FXS is pathogenic at 200 copies or higher.
+chrX	148500631	148500691	ID=AFF2;MOTIFS=GCC;STRUC=(GCC)n	GCC	4	39	200		AFF2	FRAXE	Fragile X syndrome, FRAXE type	XR	309548
+chr1	149390802	149390841	ID=NOTCH2NLC;MOTIFS=GGC;STRUC=(GGC)n	GGC	7	37	66		NOTCH2NLC	NIID	Neuronal intranuclear inclusion disease, Alzheimer disease and parkinsonism phenotype	AD	603472
+chrX	149631763	149631782	ID=TMEM185A;MOTIFS=GCC;STRUC=(GCC)n	GCC	7	40	100		TMEM185A	FRAXF	Fragile X syndrome, FRAXF type		300031		Pathogenic threshold unclear
+chr4	159342526	159342617	ID=RAPGEF2;MOTIFS=TTTTA,TTTCA;STRUC=<RAPGEF2>	TTTCA	0	0	60		RAPGEF2	FAME7	Familial adult myoclonic epilepsy type 7	AD	618075	Insertion of TTTCA is associated with disease. Expansions of endogenous TTTTA found in healthy subjects.
+chr6	170561906	170562017	ID=TBP;MOTIFS=GCA;STRUC=(GCA)n	GCA	25	42	43		TBP	SCA17	Spinocerebellar ataxia type 17	AD	607136
+chr2	176093058	176093104	ID=HOXD13;MOTIFS=GCN;STRUC=(GCN)n	GCN	14	15	22	11	HOXD13	SD5	Syndactyly	AD	186000	Clinical effect of contraction is not well understood
+chr3	183712187	183712223	ID=YEATS2;MOTIFS=TTTTA,TTTCA;STRUC=<YEATS2>	TTTCA	0	0	192		YEATS2	FAME4	Familial adult myoclonic epilepsy 4	AD	615127	Insertion of TTTCA is associated with disease. Expansions of endogenous TTTTA found in healthy subjects.
+chr2	190880872	190880920	ID=GLS;MOTIFS=GCA;STRUC=(GCA)n	GCA	5	26	90		GLS	GDPAG	Glutaminase deficiency	AR	618412
